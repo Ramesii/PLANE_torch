@@ -1,0 +1,16 @@
+# -*- coding: utf-8 -*-
+####python和pytorch环境安装可参考博客：https://blog.csdn.net/no_work/article/details/139246467
+####镜像源加速安装 pip install -r requirement.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+
+numpy ==1.21.1
+matplotlib==3.5.3
+Pillow==9.5.0
+IPython==7.34.0
+tqdm==4.66.1
+librosa==0.10.1
+PyQT5-sip==12.11.0
+PyQT5-QT5==5.15.2
+PyQt5==5.15.4
+opencv-python==4.8.0.76
+pandas==2.0.3
