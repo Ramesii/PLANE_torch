@@ -8,3 +8,6 @@ PLANE: PyTorch-based Lightweight and Efficient Aircraft Net
 3.最终版本参数alpha：0.1，gamma：1
 
 4.识别型号为我国主流民航客机，对于一个系列内的不同子型号不做区分
+
+5.数据集和模型文件：通过网盘分享的文件：model.ckpt等2个文件
+链接: https://pan.baidu.com/s/1aWAZnV5K1IrvPniQhwEgLw?pwd=qejf 提取码: qejf 
