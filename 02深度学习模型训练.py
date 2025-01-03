@@ -44,7 +44,7 @@ num_epochs = 30
 batch_size = 10
 learning_rate = 0.00005  
 momentum = 0.96 
-num_classes = len(os.listdir('F:/Macine learning/0035期飞机型号识别/0035期飞机型号识别/数据集')) 
+num_classes = len(os.listdir('F:/Machine learning/飞机型号识别/飞机型号识别/数据集')) 
 
 
 class MyDataset(torch.utils.data.Dataset):
@@ -94,6 +94,30 @@ class FocalLoss(nn.Module):  # 定义 Focal Loss 类
             return F_loss  # 返回原始损失
 
 
+class SpatialAttentionLayer(nn.Module):
+    def __init__(self, kernel_size=7):
+        super(SpatialAttentionLayer, self).__init__()
+        self.conv1 = nn.Conv2d(2, 1, kernel_size=kernel_size, padding=kernel_size//2)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        avg_out = torch.mean(x, dim=1, keepdim=True)
+        max_out, _ = torch.max(x, dim=1, keepdim=True)
+        x = torch.cat([avg_out, max_out], dim=1)
+        x = self.conv1(x)
+        return self.sigmoid(x)
+
+
+class AttentionLayer(nn.Module):
+    def __init__(self, in_channels):
+        super(AttentionLayer, self).__init__()
+        self.spatial_attention = SpatialAttentionLayer()
+
+    def forward(self, x):
+        spatial_attention = self.spatial_attention(x)
+        return x * spatial_attention
+
+
 if __name__ == '__main__':
     # 定义数据转换，包括归一化
     transform = transforms.Compose([
@@ -129,12 +153,33 @@ if __name__ == '__main__':
     class EfficientNetV3Model(nn.Module):
         def __init__(self, num_classes=num_classes):  
             super(EfficientNetV3Model, self).__init__()
-            self.model = models.efficientnet_v2_l(pretrained=True)  # 使用 EfficientNet V2 Large 作为基础模型
-            in_features = self.model.classifier[-1].in_features  # 获取最后一层的输入特征数
-            self.model.classifier = nn.Linear(in_features, num_classes)  # 修改最后的分类层
+            self.model = models.efficientnet_v2_l(pretrained=True)
+            # 获取特征提取器
+            self.features = self.model.features
+            # 获取分类器的输入特征数
+            in_features = self.model.classifier[-1].in_features
+            # 添加注意力层
+            self.attention = AttentionLayer(in_channels=1280)
+            # 修改分类器
+            self.classifier = nn.Sequential(
+                nn.Dropout(p=0.2),
+                nn.Linear(in_features, num_classes)
+            )
 
         def forward(self, x):
-            return self.model(x)
+            # 1. 首先通过特征提取器
+            x = self.features(x)  # 这会得到特征图
+            
+            # 2. 应用注意力机制
+            x = self.attention(x)
+            
+            # 3. 全局平均池化
+            x = torch.mean(x, dim=[2, 3])
+            
+            # 4. 通过分类器
+            x = self.classifier(x)
+            
+            return x
 
     net = EfficientNetV3Model(num_classes).to(device)
 
@@ -213,7 +258,7 @@ if __name__ == '__main__':
     plt.show()  # 显示图像
 
     # 获取类别名称
-    class_names = os.listdir('F:/Macine learning/0035期飞机型号识别/0035期飞机型号识别/数据集')
+    class_names = os.listdir('F:/Machine learning/飞机型号识别/飞机型号识别/数据集')
 
     # 计算混淆矩阵
     all_preds = []
